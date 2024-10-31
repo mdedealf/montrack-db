@@ -1,166 +1,123 @@
-create table onboarding
+-- onboarding table (for showing onboarding page)
+create table montrack.onboarding
 (
     title       varchar(150) not null,
     description varchar(255) not null,
     image_url   varchar(255) not null,
-    created_at  timestamp default CURRENT_TIMESTAMP,
-    updated_at  timestamp default CURRENT_TIMESTAMP,
-    deleted_at  timestamp default CURRENT_TIMESTAMP
+    created_at  timestamp default current_timestamp,
+    updated_at  timestamp default current_timestamp,
+    deleted_at  timestamp default current_timestamp
 );
 
-alter table onboarding
-    owner to postgres;
-
-create table users
+--
+-- users table (for users data, login, register, reset password and authentication)
+--
+create table montrack.users
 (
-    user_id                 serial
-        primary key,
-    full_name               varchar(150) not null,
-    email                   varchar(255) not null
-        unique,
-    password_hash           varchar(255) not null,
+    user_id                 SERIAL primary key  not null,
+    full_name               varchar(150)        not null,
+    email                   varchar(255) unique not null,
+    password_hash           varchar(255)        not null,
     profile_picture         varchar(255),
-    pin                     varchar(4)   not null,
+    pin                     varchar(4)          not null,
     is_onboarding_completed boolean   default false,
-    created_at              timestamp default CURRENT_TIMESTAMP,
-    updated_at              timestamp default CURRENT_TIMESTAMP,
-    deleted_at              timestamp default CURRENT_TIMESTAMP
+    created_at              timestamp default current_timestamp,
+    updated_at              timestamp default current_timestamp,
+    deleted_at              timestamp default current_timestamp
 );
 
-alter table users
-    owner to postgres;
-
-create table social_providers
+-- social_providers table (for social login)
+create table montrack.social_providers
 (
-    provider_id      serial
-        primary key,
-    user_id          integer      not null
-        references users
-            on delete cascade,
-    provider_name    varchar(100) not null
-        unique
-        constraint social_providers_provider_name_check
-            check ((provider_name)::text = ANY
-                   ((ARRAY ['google'::character varying, 'facebook'::character varying, 'instagram'::character varying])::text[])),
-    provider_user_id varchar(255) not null,
-    created_at       timestamp default CURRENT_TIMESTAMP,
-    updated_at       timestamp default CURRENT_TIMESTAMP,
-    deleted_at       timestamp default CURRENT_TIMESTAMP
+    provider_id      SERIAL primary key                                                                 not null,
+    user_id          int references montrack.users (user_id) on delete cascade                          not null,
+    provider_name    varchar(100) unique check ( provider_name IN ('google', 'facebook', 'instagram') ) not null,
+    provider_user_id varchar(255)                                                                       not null,
+    created_at       timestamp default current_timestamp,
+    updated_at       timestamp default current_timestamp,
+    deleted_at       timestamp default current_timestamp
 );
 
-alter table social_providers
-    owner to postgres;
-
-create table currency
+-- currencies table (for currency list)
+create table montrack.currency
 (
-    currency_id serial
-        primary key,
-    name        varchar(100) not null,
-    code        varchar(10)  not null,
-    created_at  timestamp default CURRENT_TIMESTAMP,
-    updated_at  timestamp default CURRENT_TIMESTAMP,
-    deleted_at  timestamp default CURRENT_TIMESTAMP
+    currency_id SERIAL primary key not null,
+    name        varchar(100)       not null,
+    code        varchar(10)        not null,
+    created_at  timestamp default current_timestamp,
+    updated_at  timestamp default current_timestamp,
+    deleted_at  timestamp default current_timestamp
 );
 
-alter table currency
-    owner to postgres;
-
-create table wallets
+-- wallets table (for wallet can be multiple)
+create table montrack.wallets
 (
-    wallet_id   serial
-        primary key,
-    user_id     integer        not null
-        references users
-            on delete cascade,
-    name        varchar(100)   not null,
-    amount      numeric(15, 2) not null,
-    currency_id integer        not null
-        references currency,
-    isactive    boolean   default false,
-    created_at  timestamp default CURRENT_TIMESTAMP,
-    updated_at  timestamp default CURRENT_TIMESTAMP,
-    deleted_at  timestamp default CURRENT_TIMESTAMP
+    wallet_id   SERIAL primary key                                        not null,
+    user_id     int references montrack.users (user_id) on delete cascade not null,
+    name        varchar(100)                                              not null,
+    amount      decimal(15, 2)                                            not null,
+    currency_id int references montrack.currency (currency_id)            not null,
+    isActive    boolean   default false,
+    created_at  timestamp default current_timestamp,
+    updated_at  timestamp default current_timestamp,
+    deleted_at  timestamp default current_timestamp
 );
 
-alter table wallets
-    owner to postgres;
-
-create table emojis
+-- pockets table (one wallet can have multiple pocket)
+create table montrack.pockets
 (
-    emoji_id   serial
-        primary key,
-    emoji_code varchar(20) not null,
-    created_at timestamp default CURRENT_TIMESTAMP,
-    updated_at timestamp default CURRENT_TIMESTAMP,
-    deleted_at timestamp default CURRENT_TIMESTAMP
-);
-
-alter table emojis
-    owner to postgres;
-
-create table pockets
-(
-    pocket_id      serial
-        primary key,
-    wallet_id      integer        not null
-        references wallets,
-    emoji_id       integer        not null
-        references emojis
-            on delete cascade,
-    name           varchar(100)   not null,
+    pocket_id      SERIAL primary key                                          not null,
+    wallet_id      int references montrack.wallets (wallet_id)                 not null,
+    emoji_id       int references montrack.emojis (emoji_id) on delete cascade not null,
+    name           varchar(100)                                                not null,
     description    varchar(150),
-    total_amount   numeric(15, 2) not null,
-    current_amount numeric(15, 2) not null,
+    total_amount   decimal(15, 2)                                              not null,
+    current_amount decimal(15, 2)                                              not null,
     emoji_code     varchar(20),
-    created_at     timestamp default CURRENT_TIMESTAMP,
-    updated_at     timestamp default CURRENT_TIMESTAMP,
-    deleted_at     timestamp default CURRENT_TIMESTAMP
+    created_at     timestamp default current_timestamp,
+    updated_at     timestamp default current_timestamp,
+    deleted_at     timestamp default current_timestamp
 );
 
-alter table pockets
-    owner to postgres;
-
-create table goals
+-- emojis table (contain emoji code)
+create table montrack.emojis
 (
-    goal_id         serial
-        primary key,
-    wallet_id       integer        not null
-        references wallets
-            on delete cascade,
-    name            varchar(100)   not null,
-    target_amount   numeric(15, 2) not null,
-    current_amount  numeric(15, 2) not null,
+    emoji_id   SERIAL primary key not null,
+    emoji_code varchar(20)        not null,
+    created_at timestamp default current_timestamp,
+    updated_at timestamp default current_timestamp,
+    deleted_at timestamp default current_timestamp
+);
+
+-- goals table (for storing user goals)
+create table montrack.goals
+(
+    goal_id         SERIAL primary key                                            not null,
+    wallet_id       int references montrack.wallets (wallet_id) on DELETE cascade not null,
+    name            varchar(100)                                                  not null,
+    target_amount   decimal(15, 2)                                                not null,
+    current_amount  decimal(15, 2)                                                not null,
     description     varchar(150),
     file_attachment varchar(255),
-    created_at      timestamp default CURRENT_TIMESTAMP,
-    updated_at      timestamp default CURRENT_TIMESTAMP,
-    deleted_at      timestamp default CURRENT_TIMESTAMP
+    created_at      timestamp default current_timestamp,
+    updated_at      timestamp default current_timestamp,
+    deleted_at      timestamp default current_timestamp
 );
 
-alter table goals
-    owner to postgres;
-
-create table money_records
+-- money records (for storing income or expense flow)
+create table montrack.money_records
 (
-    money_record_id    serial
-        primary key,
-    pocket_id          integer        not null
-        references pockets
-            on delete cascade,
-    goal_id            integer        not null
-        references goals
-            on delete cascade,
-    name               varchar(150)   not null,
-    type               varchar(50)    not null,
-    transaction_amount numeric(15, 2) not null,
+    money_record_id    SERIAL primary key                                            not null,
+    pocket_id          int references montrack.pockets (pocket_id) on delete cascade not null,
+    goal_id            int references montrack.goals (goal_id) on delete cascade     not null,
+    name               varchar(150)                                                  not null,
+    type               varchar(50)                                                   not null,
+    transaction_amount decimal(15, 2)                                                not null,
     transaction_date   timestamp,
     description        varchar(150),
     file_attachment    varchar(255),
-    created_at         timestamp default CURRENT_TIMESTAMP,
-    updated_at         timestamp default CURRENT_TIMESTAMP,
-    deleted_at         timestamp default CURRENT_TIMESTAMP
+    created_at         timestamp default current_timestamp,
+    updated_at         timestamp default current_timestamp,
+    deleted_at         timestamp default current_timestamp
 );
-
-alter table money_records
-    owner to postgres;
 
